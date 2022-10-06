@@ -7,6 +7,11 @@ Workflow is defined in Python by extending and combining Process, Step and NextS
 
 Workflow process execution is supported by SqlAlchemy models where process instances, states and flows are saved.
 
+# Project state
+
+In development
+
+
 ## License
 
 
