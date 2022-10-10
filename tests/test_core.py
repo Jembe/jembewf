@@ -1,4 +1,3 @@
-import flask
 from jembewf import (
     JembeWF,
     Flow,
@@ -9,20 +8,22 @@ from jembewf import (
     TransitionCallback,
     get_jembewf,
 )
+import jembewf
 
 
-def test_extension_initialisation():
+def test_extension_initialisation(app, app_ctx, _db, process_step):
     """Ensure JembeWF is loaded into Flask"""
-    jwf = JembeWF()
-    app = flask.Flask(__name__)
-    jwf.init_app(app)
 
-    with app.test_request_context():
+    jwf = JembeWF()
+    jwf.init_app(app, _db, process_step[0], process_step[1])
+
+    with app_ctx:
         assert jwf == get_jembewf()
 
 
-def test_simple_flow_definition():
+def test_simple_flow_definition(app, app_ctx, _db, process_step):
     """Test defining and running simple linear flow with three tasks"""
+    Process, Step = process_step
     jwf = JembeWF()
 
     jwf.add(
@@ -40,14 +41,91 @@ def test_simple_flow_definition():
     )
 
     # init flask app
-    app = flask.Flask(__name__)
-    jwf.init_app(app)
+    jwf.init_app(app, _db, Process, Step)
 
-    with app.test_request_context():
-        assert jwf == get_jembewf()
+    with app_ctx:
+        # manualy go throught process
+        process1 = jwf.start("flow1")
+        current_steps = process1.current_steps()
+
+        assert process1.flow_name == "flow1"
+        assert process1.is_running is True
+        assert current_steps[0].task_name == "task1"
+        assert current_steps[0].is_active is True
+
+        process1.proceed()
+        current_steps = process1.current_steps()
+
+        assert current_steps[0].task_name == "task2"
+        assert current_steps[0].is_active is True
+
+        process1.proceed()
+        assert process1.current_steps() == []
+        assert process1.is_running is False
+        assert process1.steps[0].is_active is False
+        assert process1.steps[0].is_last_step is False
+        assert process1.steps[0].task_name == "task1"
+        assert process1.steps[0].ended_at is not None
+        assert process1.steps[1].is_active is False
+        assert process1.steps[1].is_last_step is False
+        assert process1.steps[1].task_name == "task2"
+        assert process1.steps[1].ended_at is not None
+        assert process1.steps[2].is_active is False
+        assert process1.steps[2].is_last_step is True
+        assert process1.steps[2].task_name == "task3"
+        assert process1.steps[2].ended_at is not None
+
+        # go in while loop
+        process2 = jwf.start("flow1")
+        while process2.is_running:
+            process2.proceed()
+
+        assert process2.last_steps()[0].task_name == "task3"
 
 
-def test_demo_flow_definition():
+def test_simple_auto_flow(app, app_ctx, _db, process_step):
+    """Test defining and running simple linear flow with auto task"""
+    Process, Step = process_step
+    jwf = JembeWF()
+
+    jwf.add(
+        Flow("flow1")
+        .add(
+            Task("task1").add(
+                Transition("task2"),
+            ),
+            Task("task2")
+            .add(
+                Transition("task3"),
+            )
+            .auto(),
+            Task("task3"),
+        )
+        .start_with("task1")
+    )
+
+    # init flask app
+    jwf.init_app(app, _db, Process, Step)
+
+    with app_ctx:
+        # manualy go throught process
+        process1 = jwf.start("flow1")
+        current_steps = process1.current_steps()
+
+        assert process1.flow_name == "flow1"
+        assert process1.is_running is True
+        assert current_steps[0].task_name == "task1"
+        assert current_steps[0].is_active is True
+
+        process1.proceed()
+
+        process1.proceed()
+        assert process1.current_steps() == []
+        assert process1.is_running is False
+        assert process1.last_steps()[0].task_name == "task3"
+
+
+def test_demo_flow_definition(app, _db, process_step):
     """Test defining and running demo flow"""
     jwf = JembeWF()
 
@@ -105,8 +183,7 @@ def test_demo_flow_definition():
     )
 
     # init flask app
-    app = flask.Flask(__name__)
-    jwf.init_app(app)
+    jwf.init_app(app, _db, process_step[0], process_step[1])
 
     with app.test_request_context():
         assert jwf == get_jembewf()

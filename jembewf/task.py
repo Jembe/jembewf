@@ -37,6 +37,7 @@ class Task:
             callback if callback is not None else TaskCallback
         )
         self.config = config
+        self.auto_proceed = False
 
         # list of all transitions that belogns to this task
         self.transitions: List["jembewf.Transition"] = []
@@ -48,6 +49,11 @@ class Task:
     def add(self, *transitions: "jembewf.Transition") -> "jembewf.Task":
         """Adds transition to the task"""
         self.transitions.extend(transitions)
+        return self
+
+    def auto(self) -> "jembewf.Task":
+        """Task will proceed automaticaly to its transition when Step is created"""
+        self.auto_proceed = True
         return self
 
     def attach_to_flow(self, flow: "jembewf.Flow"):

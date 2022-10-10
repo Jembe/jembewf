@@ -16,7 +16,6 @@ class TransitionCallback:
         self,
         transition: "jembewf.Transition",
         from_step: "jembewf.StepMixin",
-        allow_to_proceed: bool = False,
     ):
         self.from_step = from_step
         self.process = from_step.process
@@ -33,12 +32,10 @@ class TransitionCallback:
                 f" proceeding from step '{self.from_task.name}' to '{self.to_task.name}'."
             )
 
-        self.allow_to_proceed = allow_to_proceed
-
     def can_proceed(self) -> bool:
         """Check if a transition is ready proceed to next step/task.
 
-        Default returns self.allow_to_proceed which is equal to False.
+        Default returns True.
 
         Override this method to implement check to see if all contitions
         for proceeding to next task are meet.
@@ -46,9 +43,9 @@ class TransitionCallback:
         If you want to autamticaly proceed to next task then override this
         method and return True.
         """
-        return self.allow_to_proceed
+        return True
 
-    def callback(self):
+    def callback(self, to_step: "jembewf.StepMixin"):
         """Called when transiting to the to_task/step"""
 
 

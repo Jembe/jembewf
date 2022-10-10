@@ -1,10 +1,11 @@
-from typing import TYPE_CHECKING, Dict, Optional
-from flask import current_app
+from typing import TYPE_CHECKING, Dict, Optional, Type
+import json
 from .flow import Flow, FlowCallback
 from .task import Task, TaskCallback
 from .transition import Transition, TransitionCallback
-from .process_mixin import ProcessMixin
+from .process_mixin import ProcessMixin, CantStartProcess
 from .step_mixin import StepMixin
+from .helpers import get_jembewf
 
 
 if TYPE_CHECKING:
@@ -24,6 +25,7 @@ __all__ = (
     "TransitionCallback",
     "ProcessMixin",
     "StepMixin",
+    "CantStartProcess",
 )
 
 
@@ -34,8 +36,8 @@ class JembeWF:
         self,
         app: Optional["Flask"] = None,
         db: Optional["SQLAlchemy"] = None,
-        process_model: Optional["jembewf.ProcessMixin"] = None,
-        step_model: Optional["jembewf.StepMixin"] = None,
+        process_model: Optional[Type["jembewf.ProcessMixin"]] = None,
+        step_model: Optional[Type["jembewf.StepMixin"]] = None,
     ) -> None:
 
         self.flows: Dict[str, "jembewf.Flow"] = {}
@@ -45,11 +47,11 @@ class JembeWF:
         if db is not None:
             self.db = db
 
-        self.process_model: "jembewf.ProcessMixin"
+        self.process_model: Type["jembewf.ProcessMixin"]
         if process_model is not None:
             self.process_model = process_model
 
-        self.step_model: "jembewf.StepMixin"
+        self.step_model: Type["jembewf.StepMixin"]
         if step_model is not None:
             self.step_model = step_model
 
@@ -65,8 +67,8 @@ class JembeWF:
         self,
         app: "Flask",
         db: Optional["SQLAlchemy"] = None,
-        process_model: Optional["jembewf.ProcessMixin"] = None,
-        step_model: Optional["jembewf.StepMixin"] = None,
+        process_model: Optional[Type["jembewf.ProcessMixin"]] = None,
+        step_model: Optional[Type["jembewf.StepMixin"]] = None,
     ) -> None:
         """Initialize JembeWF Flask extension
 
@@ -116,10 +118,13 @@ class JembeWF:
             self.flows[flow.name] = flow
         return self
 
+    def start(self, flow_name: str, **process_vars) -> "jembewf.ProcessMixin":
+        """Start Process instance from Flow definition
 
-def get_jembewf() -> "jembewf.JembeWF":
-    """Returns instance of JembeWf for current Flask application"""
-    jembewf_instance = current_app.extensions.get("jembewf", None)
-    if jembewf_instance is None:
-        raise Exception("JembeWF extension is not initialised")
-    return jembewf_instance
+        Returns Process instance that has been started.
+        """
+        return self.process_model.create(flow_name, **process_vars)
+
+    def can_start(self, flow_name: str, **process_vars) -> bool:
+        """Check if process from flow definition can be started"""
+        return self.process_model.can_start(flow_name, **process_vars)
