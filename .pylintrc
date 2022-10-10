@@ -1,2 +1,4 @@
 [MASTER]
+init-hook="import jembewf, sys, os;sys.path.extend((os.path.dirname(jembewf.__path__[0])))"
 disable = missing-module-docstring
+good-names= db
