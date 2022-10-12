@@ -64,10 +64,9 @@ class Flow:
                 )
         self.starts_with_tasks = list(task_names)
 
-
         # Associate from_task, to_task, and flow inside transitions
         # Can't be done earlier because we need to define have
-        # all tasks defined to associate to_task 
+        # all tasks defined to associate to_task
         for task in self.tasks.values():
             for transition in task.transitions:
                 transition.attach_to_from_task(task)

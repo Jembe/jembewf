@@ -128,3 +128,24 @@ class JembeWF:
     def can_start(self, flow_name: str, **process_vars) -> bool:
         """Check if process from flow definition can be started"""
         return self.process_model.can_start(flow_name, **process_vars)
+
+    def get_flow(self, flow_name: str) -> "jembewf.Flow":
+        """Returns flow instance by flow name
+
+        Args:
+            flow_name (str): Name of the flow
+
+        Raises:
+            ValueError: When flow with provided name doesn't exist
+
+        Returns:
+            jembewf.Flow: Flow instance
+        """
+        try:
+            return self.flows[flow_name]
+        except KeyError as err:
+            raise ValueError(f"Flow '{flow_name}' doen't exit!") from err
+
+    def has_flow(self, flow_name: str) -> bool:
+        """Returns true if flow with provided name exist"""
+        return flow_name in self.flows
