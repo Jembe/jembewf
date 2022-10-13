@@ -156,6 +156,12 @@ class ProcessMixin:
 
     @classmethod
     def _create_process(cls, flow_name: str, **process_vars) -> "jembewf.ProcessMixin":
+        """Creates process instance
+
+        process_vars that have same name as process model fields excluding field defined
+        by ProcessMixin are saved directly in model.
+        The rest of the process_vars are saved in process.variables (json field)
+        """
         jwf = get_jembewf()
         try:
             flow = jwf.flows[flow_name]
@@ -166,7 +172,27 @@ class ProcessMixin:
 
         process = jwf.process_model()
         process.flow_name = flow.name
-        process.variables = process_vars
+
+        # assign process variables to model attributes if one with same name exist
+        # assign the rest of process_vars to process.variables
+        valid_model_attr = set(
+            sa.orm.class_mapper(jwf.process_model).attrs.keys()
+        ).difference(
+            {
+                "steps",
+                "id",
+                "flow_name",
+                "is_running",
+                "variables",
+                "started_at",
+                "ended_at",
+            }
+        )
+        for attr_name in valid_model_attr.intersection(process_vars.keys()):
+            setattr(process, attr_name, process_vars[attr_name])
+        process.variables = {
+            k: v for k, v in process_vars.items() if k not in valid_model_attr
+        }
 
         return process
 

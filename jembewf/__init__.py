@@ -59,7 +59,8 @@ class JembeWF:
             if process_model is None or step_model is None or db is None:
                 raise Exception(
                     "When you provide app parameter then "
-                    "db, process_model and step_model must also be provided in other to initialise JembeWf."
+                    "db, process_model and step_model must also be provided "
+                    "in other to initialise JembeWf."
                 )
             self.init_app(app, self.db, self.process_model, self.step_model)
 
