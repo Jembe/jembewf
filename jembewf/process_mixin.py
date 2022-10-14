@@ -55,13 +55,17 @@ class ProcessMixin:
             order_by=f"{cls.get_step_class_name()}.id",
         )
 
-    def current_steps(self) -> List["jembewf.StepMisin"]:
+    def current_steps(self) -> List["jembewf.StepMixin"]:
         """Returns current active process steps"""
         session = object_session(self)
         step = get_jembewf().step_model
-        return list(session.query(step).filter(step.is_active == True).all())
+        return list(
+            session.query(step)
+            .filter(step.is_active == True, step.process_id == self.id)
+            .all()
+        )
 
-    def last_steps(self) -> List["jembewf.StepMisin"]:
+    def last_steps(self) -> List["jembewf.StepMixin"]:
         """Returns last steps of the process"""
         session = object_session(self)
         step = get_jembewf().step_model
