@@ -150,10 +150,11 @@ class ProcessMixin:
         session = object_session(self)
         step = get_jembewf().step_model
         is_running = session.query(
-            session.query(step).filter(step.is_active == True).exists()
+            session.query(step).filter(step.is_active == True, step.process_id == self.id).exists()
         ).scalar()
         if self.is_running != is_running:
             self.is_running = is_running
+            self.ended_at = datetime.utcnow()
             session.add(self)
             session.commit()
         return is_running

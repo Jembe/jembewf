@@ -65,3 +65,13 @@ class Task:
         if not hasattr(self, "flow"):
             raise Exception(f"Task '{self.name}' is not attached to the flow")
         self.validate = True
+
+    def get_transition(self, transition_name: str) -> "jembewf.Transition":
+        try:
+            return next(
+                trans for trans in self.transitions if trans.name == transition_name
+            )
+        except StopIteration:
+            raise ValueError(
+                f"Transition {transition_name} does not exist in task '{self.name}'!"
+            )

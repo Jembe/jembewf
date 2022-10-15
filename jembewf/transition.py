@@ -67,6 +67,8 @@ class Transition:
         self.flow: "jembewf.Flow"
         self.from_task: "jembewf.Task"
         self.to_task: "jembewf.Task"
+        # Unique transition name automaticly set when attached to task
+        self.name: str
 
         self.validate = False
 
@@ -75,6 +77,8 @@ class Transition:
         self.from_task = task
         self.flow = task.flow
         self.to_task = self.flow.tasks[self.to_task_name]
+        transition_id = task.transitions.index(self)
+        self.name = f"{self.from_task.name} -- {transition_id}"
         self._validate()
 
     def _validate(self):

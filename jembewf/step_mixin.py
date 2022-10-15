@@ -134,20 +134,39 @@ class StepMixin:
 
         return step
 
-    def proceed(self) -> bool:
-        """proceed with the process execution by transiting from this step forward
+    def proceed(self, transition: Optional["jembewf.Transition"] = None) -> bool:
+        """Proceed process with transition from this step
 
-        Returns True if we proceeded to next steps
+        Args:
+            transition (Optional[&quot;jembewf.Transition&quot;], optional):
+                Transition to proceed.
+                If transition is None than proceed with every transition on this step.
+                Defaults to None.
+
+        TODO return reason why transition cann't proceed
+
+        Raises:
+            ValueError: When transition is not part of this step.
+        Returns:
+            bool: True when process proceed, False if its not
+
         """
         # check if this is not last step and is active
         if self.is_last_step or not self.is_active:
             return False
 
         proceeded = False
-        for transition in self.task.transitions:
-            transition_callback = transition.callback(transition, self)
+
+        if transition and transition not in self.task.transitions:
+            raise ValueError(
+                f"Transition '{transition}' is not transition from task '{self.task}'"
+            )
+        transitions = [transition] if transition else self.task.transitions
+
+        for trans in transitions:
+            transition_callback = trans.callback(trans, self)
             if transition_callback.can_proceed():
-                self.create(self.process, transition.to_task, self, transition_callback)
+                self.create(self.process, trans.to_task, self, transition_callback)
                 proceeded = True
 
         if proceeded:
@@ -159,6 +178,34 @@ class StepMixin:
             self.process.check_is_running()
 
         return proceeded
+
+    def can_proceed(self, transition: Optional["jembewf.Transition"] = None) -> bool:
+        """Check if process can proceed
+
+        Args:
+            transition (Optional[&quot;jembewf.Transition&quot;], optional):
+                Check if process can proceed with this transition.
+                If transition is None than check with every transition on this step.
+                Defaults to None.
+
+        TODO return reason why transition cann't proceed
+
+        Raises:
+            ValueError: When transition is not part of this step.
+        Returns:
+            bool: True when process can proceed, False if it cannot
+        """
+        if transition and transition not in self.task.transitions:
+            raise ValueError(
+                f"Transition '{transition}' is not transition from task '{self.task}'"
+            )
+        transitions = [transition] if transition else self.task.transitions
+
+        for trans in transitions:
+            transition_callback = trans.callback(trans, self)
+            if transition_callback.can_proceed():
+                return True
+        return False
 
     @classmethod
     def get_process_table_name(cls) -> str:
