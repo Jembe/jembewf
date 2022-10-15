@@ -3,9 +3,9 @@
 Library with simple Workflow implementation for use in Flask with Sqlalchemy. 
 JembeWF can be used without Jembe Framework it only depends on Flask and Flask-SqlAlchemy.
 
-Workflow is defined in Python by extending and combining Flow, Task and Transition classes.
+Workflow is defined in Python by extending and combining Flow, State and Transition classes.
 Workflow is executed by Process and Step SqlAlchemy persistet instaces that saves information
-of process instances (defined by Flow), Step instances (defined by Task).
+of process instances (defined by Flow), Step instances (defined by State).
 
 
 # Project state
@@ -32,22 +32,22 @@ In development
     jwf = JembeWF()
 
     # Flow definition
-    class TaskCallback(jembewf.TaskCallback):
+    class StateCallback(jembewf.StateCallback):
         def callback(self):
             print(self.step)
 
     jwf.add(
         Flow("flow1")
         .add(
-            Task("task1", TaskCallback).add(
-                Transition("task2"),
+            State("state1", StateCallback).add(
+                Transition("state2"),
             ),
-            Task("task2", TaskCallback).add(
-                Transition("task3"),
+            State("state2", StateCallback).add(
+                Transition("state3"),
             ),
-            Task("task3", TaskCallback),
+            State("state3", StateCallback),
         )
-        .start_with("task1")
+        .start_with("state1")
     )
     jwf.init_app(app, db, Process, Step)
 
@@ -60,9 +60,9 @@ In development
 
 Output:
 ```bash
-<Step #1: 'task1' from process #1: 'flow1'>
-<Step #2: 'task2' from process #1: 'flow1'>
-<Step #3: 'task3' from process #1: 'flow1'>
+<Step #1: 'state1' from process #1: 'flow1'>
+<Step #2: 'state2' from process #1: 'flow1'>
+<Step #3: 'state3' from process #1: 'flow1'>
 ```
 
 ## License

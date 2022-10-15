@@ -121,10 +121,10 @@ class ProcessMixin:
 
             process.callback.callback()
 
-            # create steps for starting tasks
-            for task_name in process.flow.starts_with_tasks:
-                task = process.flow.tasks[task_name]
-                jwf.step_model.create(process, task)
+            # create steps for starting states
+            for state_name in process.flow.starts_with_states:
+                state = process.flow.states[state_name]
+                jwf.step_model.create(process, state)
         else:
             raise CantStartProcess(
                 f"Can't start process '{flow_name}' with process vars: {process_vars}"
@@ -134,7 +134,7 @@ class ProcessMixin:
     def proceed(self) -> bool:
         """Proceed with process execution
 
-        Check if any of active steps can transit to the next tasks, if so
+        Check if any of active steps can transit to the next states, if so
         do the transition.
 
         Returns True if process proceed to new steps

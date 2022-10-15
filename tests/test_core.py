@@ -2,8 +2,8 @@ from jembewf import (
     JembeWF,
     Flow,
     FlowCallback,
-    Task,
-    TaskCallback,
+    State,
+    StateCallback,
     Transition,
     TransitionCallback,
     get_jembewf,
@@ -22,22 +22,22 @@ def test_extension_initialisation(app, app_ctx, _db, process_step):
 
 
 def test_simple_flow_definition(app, app_ctx, _db, process_step):
-    """Test defining and running simple linear flow with three tasks"""
+    """Test defining and running simple linear flow with three states"""
     Process, Step = process_step
     jwf = JembeWF()
 
     jwf.add(
         Flow("flow1")
         .add(
-            Task("task1").add(
-                Transition("task2"),
+            State("state1").add(
+                Transition("state2"),
             ),
-            Task("task2").add(
-                Transition("task3"),
+            State("state2").add(
+                Transition("state3"),
             ),
-            Task("task3"),
+            State("state3"),
         )
-        .start_with("task1")
+        .start_with("state1")
     )
 
     # init flask app
@@ -50,13 +50,13 @@ def test_simple_flow_definition(app, app_ctx, _db, process_step):
 
         assert process1.flow_name == "flow1"
         assert process1.is_running is True
-        assert current_steps[0].task_name == "task1"
+        assert current_steps[0].state_name == "state1"
         assert current_steps[0].is_active is True
 
         process1.proceed()
         current_steps = process1.current_steps()
 
-        assert current_steps[0].task_name == "task2"
+        assert current_steps[0].state_name == "state2"
         assert current_steps[0].is_active is True
 
         process1.proceed()
@@ -64,15 +64,15 @@ def test_simple_flow_definition(app, app_ctx, _db, process_step):
         assert process1.is_running is False
         assert process1.steps[0].is_active is False
         assert process1.steps[0].is_last_step is False
-        assert process1.steps[0].task_name == "task1"
+        assert process1.steps[0].state_name == "state1"
         assert process1.steps[0].ended_at is not None
         assert process1.steps[1].is_active is False
         assert process1.steps[1].is_last_step is False
-        assert process1.steps[1].task_name == "task2"
+        assert process1.steps[1].state_name == "state2"
         assert process1.steps[1].ended_at is not None
         assert process1.steps[2].is_active is False
         assert process1.steps[2].is_last_step is True
-        assert process1.steps[2].task_name == "task3"
+        assert process1.steps[2].state_name == "state3"
         assert process1.steps[2].ended_at is not None
 
         # go in while loop
@@ -80,28 +80,28 @@ def test_simple_flow_definition(app, app_ctx, _db, process_step):
         while process2.is_running:
             process2.proceed()
 
-        assert process2.last_steps()[0].task_name == "task3"
+        assert process2.last_steps()[0].state_name == "state3"
 
 
 def test_simple_auto_flow(app, app_ctx, _db, process_step):
-    """Test defining and running simple linear flow with auto task"""
+    """Test defining and running simple linear flow with auto state"""
     Process, Step = process_step
     jwf = JembeWF()
 
     jwf.add(
         Flow("flow1")
         .add(
-            Task("task1").add(
-                Transition("task2"),
+            State("state1").add(
+                Transition("state2"),
             ),
-            Task("task2")
+            State("state2")
             .add(
-                Transition("task3"),
+                Transition("state3"),
             )
             .auto(),
-            Task("task3"),
+            State("state3"),
         )
-        .start_with("task1")
+        .start_with("state1")
     )
 
     # init flask app
@@ -114,7 +114,7 @@ def test_simple_auto_flow(app, app_ctx, _db, process_step):
 
         assert process1.flow_name == "flow1"
         assert process1.is_running is True
-        assert current_steps[0].task_name == "task1"
+        assert current_steps[0].state_name == "state1"
         assert current_steps[0].is_active is True
 
         process1.proceed()
@@ -122,7 +122,7 @@ def test_simple_auto_flow(app, app_ctx, _db, process_step):
         process1.proceed()
         assert process1.current_steps() == []
         assert process1.is_running is False
-        assert process1.last_steps()[0].task_name == "task3"
+        assert process1.last_steps()[0].state_name == "state3"
 
 
 def test_demo_flow_definition(app, _db, process_step):
@@ -132,31 +132,31 @@ def test_demo_flow_definition(app, _db, process_step):
     class Flow1Callback(FlowCallback):
         """Flow1 Callback"""
 
-    class Task1Callback(TaskCallback):
-        """Task1 Callback"""
+    class State1Callback(StateCallback):
+        """State1 Callback"""
 
-    class Task2Callback(TaskCallback):
-        """Task 2 Callback"""
+    class State2Callback(StateCallback):
+        """State 2 Callback"""
 
-    class Task3Callback(TaskCallback):
-        """Task Callback"""
+    class State3Callback(StateCallback):
+        """State Callback"""
 
-    class Task4Callback(TaskCallback):
-        """Task Callback"""
+    class State4Callback(StateCallback):
+        """State Callback"""
 
-    class TaskEndCallback(TaskCallback):
-        """Task Callback"""
+    class StateEndCallback(StateCallback):
+        """State Callback"""
 
-    class ToTask2Callback(TransitionCallback):
-        """ToTask2 Callback"""
+    class ToState2Callback(TransitionCallback):
+        """ToState2 Callback"""
 
-    class ToTask3Callback(TransitionCallback):
+    class ToState3Callback(TransitionCallback):
         """Transition Callback"""
 
-    class ToTask4Callback(TransitionCallback):
+    class ToState4Callback(TransitionCallback):
         """Transition Callback"""
 
-    class FromTask2ToTaskEndCallback(TransitionCallback):
+    class FromState2ToStateEndCallback(TransitionCallback):
         """Transition Callback"""
 
     jwf.add(
@@ -167,19 +167,19 @@ def test_demo_flow_definition(app, _db, process_step):
             description="This is config parameter for flow",
         )
         .add(
-            Task("task1", Task1Callback, title="Task 1",).add(
-                Transition("task2", ToTask2Callback, title="Go to Task2"),
+            State("state1", State1Callback, title="State 1",).add(
+                Transition("state2", ToState2Callback, title="Go to State2"),
             ),
-            Task("task2", Task2Callback, title="Task 2").add(
-                Transition("task3", ToTask3Callback, title="Go to Task 3"),
-                Transition("task4", ToTask4Callback, title="Go to Task 4"),
-                Transition("task_end", FromTask2ToTaskEndCallback, title="Go to end"),
+            State("state2", State2Callback, title="State 2").add(
+                Transition("state3", ToState3Callback, title="Go to State 3"),
+                Transition("state4", ToState4Callback, title="Go to State 4"),
+                Transition("state_end", FromState2ToStateEndCallback, title="Go to end"),
             ),
-            Task("task3", Task3Callback).add(Transition("task4")),
-            Task("task4", Task4Callback).add(Transition("task_end")),
-            Task("task_end", TaskEndCallback),
+            State("state3", State3Callback).add(Transition("state4")),
+            State("state4", State4Callback).add(Transition("state_end")),
+            State("state_end", StateEndCallback),
         )
-        .start_with("task1")
+        .start_with("state1")
     )
 
     # init flask app

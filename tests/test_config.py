@@ -3,8 +3,8 @@ from jembewf import (
     JembeWF,
     Flow,
     FlowCallback,
-    Task,
-    TaskCallback,
+    State,
+    StateCallback,
     Transition,
     TransitionCallback,
     get_jembewf,
@@ -13,7 +13,7 @@ import jembewf
 
 
 def test_set_process_model_attributes(app, app_ctx, _db):
-    """Test defining and running simple linear flow with three tasks"""
+    """Test defining and running simple linear flow with three states"""
     jwf = JembeWF()
 
     class Process(jembewf.ProcessMixin, _db.Model):
@@ -41,10 +41,10 @@ def test_set_process_model_attributes(app, app_ctx, _db):
     jwf.add(
         Flow("flow")
         .add(
-            Task("start").add(
+            State("start").add(
                 Transition("end"),
             ),
-            Task("end"),
+            State("end"),
         )
         .start_with("start")
     )

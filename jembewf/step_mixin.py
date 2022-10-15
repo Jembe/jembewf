@@ -15,7 +15,7 @@ __all__ = ("StepMixin",)
 class StepMixin:
     """Mixin to be applied to Step SqlAlchemy model
 
-    Step model keep track of all instances of tasks in flows (current and completed)
+    Step model keep track of all instances of states in flows (current and completed)
     and it's local variables and states.
 
     StepMixin should be applied class extended from
@@ -48,7 +48,7 @@ class StepMixin:
             back_populates="steps",
         )
 
-    task_name = sa.Column(sa.String(250), nullable=False)
+    state_name = sa.Column(sa.String(250), nullable=False)
 
     is_active = sa.Column(
         sa.Boolean(), nullable=False, default=True, server_default=sa.true()
@@ -57,7 +57,7 @@ class StepMixin:
         sa.Boolean(), nullable=False, default=False, server_default=sa.false()
     )
 
-    # step/task variables
+    # step/state variables
     variables = sa.Column(NestedMutableJson)
 
     started_at = sa.Column(sa.DateTime, default=datetime.utcnow, nullable=False)
@@ -79,29 +79,29 @@ class StepMixin:
         )
 
     @property
-    def task(self) -> "jembewf.Task":
-        """Returns Task definition of the step"""
-        return self.process.flow.tasks[self.task_name]
+    def state(self) -> "jembewf.State":
+        """Returns State definition of the step"""
+        return self.process.flow.states[self.state_name]
 
     @property
-    def callback(self) -> "jembewf.TaskCallback":
-        """TaskCallback of the task instance"""
-        return self.task.callback(self)
+    def callback(self) -> "jembewf.StateCallback":
+        """StateCallback of the state instance"""
+        return self.state.callback(self)
 
     @classmethod
     def create(
         cls,
         process: "jembewf.ProcessMixin",
-        task: "jembewf.Task",
+        state: "jembewf.State",
         prev_step: Optional["jembewf.StepMixin"] = None,
         transition_callback: Optional["jembewf.TransitionCallback"] = None,
         **step_vars,
     ) -> "jembewf.StepMixin":
-        """Creates step instance in process for the task
+        """Creates step instance in process for the state
 
         Args:
             process (jembewf.ProcessMixin): Process instance to whome the step will belong
-            task (jembewf.Task): Task instance for wichin we create the step
+            state (jembewf.State): State instance for wichin we create the step
             from_step (Optional[jembewf.StepMixin]): previous step
 
         Returns:
@@ -109,12 +109,12 @@ class StepMixin:
         """
         jwf = get_jembewf()
         step = jwf.step_model()
-        step.task_name = task.name
+        step.state_name = state.name
         step.process = process
         step.variables = step_vars
         if prev_step:
             step.prev_step = prev_step
-        step.is_last_step = len(task.transitions) == 0
+        step.is_last_step = len(state.transitions) == 0
 
         jwf.db.session.add(step)
         jwf.db.session.commit()
@@ -129,7 +129,7 @@ class StepMixin:
             step.ended_at = datetime.utcnow()
             jwf.db.session.add(step)
             jwf.db.session.commit()
-        elif step.task.auto_proceed:
+        elif step.state.auto_proceed:
             step.proceed()
 
         return step
@@ -157,16 +157,16 @@ class StepMixin:
 
         proceeded = False
 
-        if transition and transition not in self.task.transitions:
+        if transition and transition not in self.state.transitions:
             raise ValueError(
-                f"Transition '{transition}' is not transition from task '{self.task}'"
+                f"Transition '{transition}' is not transition from state '{self.state}'"
             )
-        transitions = [transition] if transition else self.task.transitions
+        transitions = [transition] if transition else self.state.transitions
 
         for trans in transitions:
             transition_callback = trans.callback(trans, self)
             if transition_callback.can_proceed():
-                self.create(self.process, trans.to_task, self, transition_callback)
+                self.create(self.process, trans.to_state, self, transition_callback)
                 proceeded = True
 
         if proceeded:
@@ -195,11 +195,11 @@ class StepMixin:
         Returns:
             bool: True when process can proceed, False if it cannot
         """
-        if transition and transition not in self.task.transitions:
+        if transition and transition not in self.state.transitions:
             raise ValueError(
-                f"Transition '{transition}' is not transition from task '{self.task}'"
+                f"Transition '{transition}' is not transition from state '{self.state}'"
             )
-        transitions = [transition] if transition else self.task.transitions
+        transitions = [transition] if transition else self.state.transitions
 
         for trans in transitions:
             transition_callback = trans.callback(trans, self)
@@ -234,4 +234,4 @@ class StepMixin:
             ) from err
 
     def __repr__(self):
-        return f"<Step #{self.id}: '{self.task_name}' from process #{self.process_id}: '{self.process.flow_name}'>"
+        return f"<Step #{self.id}: '{self.state_name}' from process #{self.process_id}: '{self.process.flow_name}'>"

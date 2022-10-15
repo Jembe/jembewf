@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Dict, Optional, Type
 import json
 from .flow import Flow, FlowCallback
-from .task import Task, TaskCallback
+from .state import State, StateCallback
 from .transition import Transition, TransitionCallback
 from .process_mixin import ProcessMixin, CantStartProcess
 from .step_mixin import StepMixin
@@ -19,8 +19,8 @@ __all__ = (
     "JembeWF",
     "Flow",
     "FlowCallback",
-    "Task",
-    "TaskCallback",
+    "State",
+    "StateCallback",
     "Transition",
     "TransitionCallback",
     "ProcessMixin",

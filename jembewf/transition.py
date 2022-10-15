@@ -21,32 +21,32 @@ class TransitionCallback:
         self.process = from_step.process
 
         self.transition = transition
-        self.from_task = transition.from_task
-        self.to_task = transition.to_task
+        self.from_state = transition.from_state
+        self.to_state = transition.to_state
         self.flow = transition.flow
 
         if transition.flow != self.process.flow:
             raise Exception(
                 f"Transition flow '{transition.flow.name}'  "
                 f"and Process flow '{self.process.flow}' are not equal when "
-                f" proceeding from step '{self.from_task.name}' to '{self.to_task.name}'."
+                f" proceeding from step '{self.from_state.name}' to '{self.to_state.name}'."
             )
 
     def can_proceed(self) -> bool:
-        """Check if a transition is ready proceed to next step/task.
+        """Check if a transition is ready proceed to next step/state.
 
         Default returns True.
 
         Override this method to implement check to see if all contitions
-        for proceeding to next task are meet.
+        for proceeding to next state are meet.
 
-        If you want to autamticaly proceed to next task then override this
+        If you want to autamticaly proceed to next state then override this
         method and return True.
         """
         return True
 
     def callback(self, to_step: "jembewf.StepMixin"):
-        """Called when transiting to the to_task/step"""
+        """Called when transiting to the to_state/step"""
 
 
 class Transition:
@@ -54,41 +54,41 @@ class Transition:
 
     def __init__(
         self,
-        to_task_name: str,
+        to_state_name: str,
         callback: Optional[Type["jembewf.TransitionCallback"]] = None,
         **config,
     ) -> None:
-        self.to_task_name = to_task_name
+        self.to_state_name = to_state_name
         self.callback: Type[TransitionCallback] = (
             callback if callback is not None else TransitionCallback
         )
         self.config = config
 
         self.flow: "jembewf.Flow"
-        self.from_task: "jembewf.Task"
-        self.to_task: "jembewf.Task"
-        # Unique transition name automaticly set when attached to task
+        self.from_state: "jembewf.State"
+        self.to_state: "jembewf.State"
+        # Unique transition name automaticly set when attached to state
         self.name: str
 
         self.validate = False
 
-    def attach_to_from_task(self, task: "jembewf.Task"):
-        """Attach to the Task"""
-        self.from_task = task
-        self.flow = task.flow
-        self.to_task = self.flow.tasks[self.to_task_name]
-        transition_id = task.transitions.index(self)
-        self.name = f"{self.from_task.name} -- {transition_id}"
+    def attach_to_from_state(self, state: "jembewf.State"):
+        """Attach to the State"""
+        self.from_state = state
+        self.flow = state.flow
+        self.to_state = self.flow.states[self.to_state_name]
+        transition_id = state.transitions.index(self)
+        self.name = f"{self.from_state.name} -- {transition_id}"
         self._validate()
 
     def _validate(self):
-        if not hasattr(self, "from_task"):
+        if not hasattr(self, "from_state"):
             raise Exception(
-                f"Transition '{self.name}' is not attached to the from_task"
+                f"Transition '{self.name}' is not attached to the from_state"
             )
-        if not hasattr(self, "to_task"):
+        if not hasattr(self, "to_state"):
             raise Exception(
-                f"Transition '{self.name}' is not associated with the to_task"
+                f"Transition '{self.name}' is not associated with the to_state"
             )
         if not hasattr(self, "flow"):
             raise Exception(f"Transition '{self.name}' is not associated with the flow")

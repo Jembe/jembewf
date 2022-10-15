@@ -38,82 +38,82 @@ class Flow:
         self.callback: Type[FlowCallback] = callback if callback else FlowCallback
         self.config = config
 
-        # list of all tasks that belongs to this workflow
-        self.tasks: Dict[str, "jembewf.Task"] = {}
-        self.starts_with_tasks: List[str] = []
-        self.ends_with_tasks: List[str] = []
+        # list of all states that belongs to this workflow
+        self.states: Dict[str, "jembewf.State"] = {}
+        self.starts_with_states: List[str] = []
+        self.ends_with_states: List[str] = []
 
         self.validated = False
 
-    def start_with(self, *task_names: str) -> "jembewf.Flow":
-        """Define task names that will be executed when flow starts
+    def start_with(self, *state_names: str) -> "jembewf.Flow":
+        """Define state names that will be executed when flow starts
 
         Flow must call start_with in order to have valid and complet definition.
         """
-        # at least one task_name
-        if len(task_names) == 0:
+        # at least one state_name
+        if len(state_names) == 0:
             raise Exception(
-                f"At least one task_name must be provided to flow '{self.name}'."
+                f"At least one state_name must be provided to flow '{self.name}'."
             )
 
-        # task with provided names exist
-        for task_name in task_names:
-            if task_name not in self.tasks:
+        # state with provided names exist
+        for state_name in state_names:
+            if state_name not in self.states:
                 raise Exception(
-                    f"Task with name '{task_name}' doesn't exist in flow '{self.name}'."
+                    f"State with name '{state_name}' doesn't exist in flow '{self.name}'."
                 )
-        self.starts_with_tasks = list(task_names)
+        self.starts_with_states = list(state_names)
 
-        # Associate from_task, to_task, and flow inside transitions
+        # Associate from_state, to_state, and flow inside transitions
         # Can't be done earlier because we need to define have
-        # all tasks defined to associate to_task
-        for task in self.tasks.values():
-            for transition in task.transitions:
-                transition.attach_to_from_task(task)
+        # all states defined to associate to_state
+        for state in self.states.values():
+            for transition in state.transitions:
+                transition.attach_to_from_state(state)
 
         self._validate_flow()
         return self
 
-    def add(self, *tasks: "jembewf.Task") -> "jembewf.Flow":
-        """Add Tasks to flow
+    def add(self, *states: "jembewf.State") -> "jembewf.Flow":
+        """Add States to flow
 
         Returns:
             jembewf.Flow: returns self
         """
-        for task in tasks:
-            if task.name in self.tasks:
+        for state in states:
+            if state.name in self.states:
                 raise Exception(
-                    f"Task '{task.name}' already exist in flow '{self.name}'."
+                    f"State '{state.name}' already exist in flow '{self.name}'."
                 )
 
-            task.attach_to_flow(self)
-            self.tasks[task.name] = task
-            if len(task.transitions) == 0:
-                self.ends_with_tasks.append(task.name)
+            state.attach_to_flow(self)
+            self.states[state.name] = state
+            if len(state.transitions) == 0:
+                self.ends_with_states.append(state.name)
         return self
 
     def _validate_flow(self):
-        if len(self.tasks) == 0:
-            Exception(f"Flow '{self.name} have no tasks.")
+        if len(self.states) == 0:
+            Exception(f"Flow '{self.name} have no states.")
 
-        if len(self.starts_with_tasks) == 0:
+        if len(self.starts_with_states) == 0:
             Exception(
-                f"Flow '{self.name} have no start tasks defined. "
-                "Use Flow.start_with to define start tasks."
+                f"Flow '{self.name} have no start states defined. "
+                "Use Flow.start_with to define start states."
             )
 
-        if len(self.ends_with_tasks) == 0:
+        if len(self.ends_with_states) == 0:
             Exception(
-                f"Flow '{self.name} have no endtasks. Tasks are making infinite loop"
+                f"Flow '{self.name} have no endstates. States are making infinite loop"
             )
 
-        # check if all transitions  lead to to the existing task_name
-        for task in self.tasks.values():
-            for transition in task.transitions:
-                if transition.to_task_name not in self.tasks:
+        # check if all transitions  lead to to the existing state_name
+        for state in self.states.values():
+            for transition in state.transitions:
+                if transition.to_state_name not in self.states:
                     raise Exception(
-                        f"Transition from task '{task.name}' "
+                        f"Transition from state '{state.name}' "
                         f"in flow '{self.name}' leads to non existing "
-                        f"task '{transition.to_task_name}'."
+                        f"state '{transition.to_state_name}'."
                     )
         self.validated = True
