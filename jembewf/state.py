@@ -67,6 +67,7 @@ class State:
         self.validate = True
 
     def get_transition(self, transition_name: str) -> "jembewf.Transition":
+        """Get current state transition by transition name"""
         try:
             return next(
                 trans for trans in self.transitions if trans.name == transition_name
@@ -74,4 +75,4 @@ class State:
         except StopIteration:
             raise ValueError(
                 f"Transition {transition_name} does not exist in state '{self.name}'!"
-            )
+            ) from StopIteration
