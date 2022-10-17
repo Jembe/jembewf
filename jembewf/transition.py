@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Optional, Type, Union
 
 if TYPE_CHECKING:
     import jembewf
@@ -32,16 +32,20 @@ class TransitionCallback:
                 f" proceeding from step '{self.from_state.name}' to '{self.to_state.name}'."
             )
 
-    def can_proceed(self) -> bool:
+    def can_proceed(self) -> Union[bool, "jembewf.CanProceed"]:
         """Check if a transition is ready proceed to next step/state.
-
-        Default returns True.
 
         Override this method to implement check to see if all contitions
         for proceeding to next state are meet.
 
-        If you want to autamticaly proceed to next state then override this
-        method and return True.
+        If you want to automaticaly proceed to next state then this
+        method should return True (and owning state must been made auto state
+        by calling .auto()).
+
+        Returns:
+            Union[bool, jembewf.CanProceed]: True if transition can proceed.
+                You can attach reason  why transition cannt proceed
+                by returing instance of jembewf.CanProceed. Default returns True.
         """
         return True
 

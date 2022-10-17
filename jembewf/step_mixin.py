@@ -1,9 +1,9 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Union
 from datetime import datetime
 from sqlalchemy_json import NestedMutableJson
 from sqlalchemy.orm import declarative_mixin, declared_attr
 import sqlalchemy as sa
-from .helpers import get_jembewf
+from .helpers import CanProceed, get_jembewf
 
 if TYPE_CHECKING:
     import jembewf
@@ -134,7 +134,9 @@ class StepMixin:
 
         return step
 
-    def proceed(self, transition: Optional["jembewf.Transition"] = None) -> bool:
+    def proceed(
+        self, transition: Optional["jembewf.Transition"] = None
+    ) -> Union[bool, "jembewf.CanProceed"]:
         """Proceed process with transition from this step
 
         Args:
@@ -143,19 +145,16 @@ class StepMixin:
                 If transition is None than proceed with every transition on this step.
                 Defaults to None.
 
-        TODO return reason why transition cann't proceed
-
         Raises:
             ValueError: When transition is not part of this step.
-        Returns:
-            bool: True when process proceed, False if its not
 
+        Returns:
+            Union[bool, jembewf.CanProceed]: Returns True if process can proceed or
+                CanProceed instanace with concated reasons if process can't proceed.
         """
         # check if this is not last step and is active
         if self.is_last_step or not self.is_active:
             return False
-
-        proceeded = False
 
         if transition and transition not in self.state.transitions:
             raise ValueError(
@@ -163,11 +162,15 @@ class StepMixin:
             )
         transitions = [transition] if transition else self.state.transitions
 
+        proceeded = False
+        cannot_proceed = CanProceed(False)
         for trans in transitions:
             transition_callback = trans.callback(trans, self)
-            if transition_callback.can_proceed():
+            if can_proceed := transition_callback.can_proceed():
                 self.create(self.process, trans.to_state, self, transition_callback)
                 proceeded = True
+            else:
+                cannot_proceed.append_reason(can_proceed)
 
         if proceeded:
             self.is_active = False
@@ -177,10 +180,17 @@ class StepMixin:
             jwf.db.session.commit()
             self.process.check_is_running()
 
-        return proceeded
+        return proceeded if proceeded else cannot_proceed
 
-    def can_proceed(self, transition: Optional["jembewf.Transition"] = None) -> bool:
+    def can_proceed(
+        self, transition: Optional["jembewf.Transition"] = None
+    ) -> Union[bool, "jembewf.CanProceed"]:
         """Check if process can proceed
+
+        When 'transition' is provided, check if process can proceed folowing
+        that transition.
+        When 'transisition' is not provided, check if process can proceed following
+        any transition from the this step.
 
         Args:
             transition (Optional[&quot;jembewf.Transition&quot;], optional):
@@ -188,12 +198,11 @@ class StepMixin:
                 If transition is None than check with every transition on this step.
                 Defaults to None.
 
-        TODO return reason why transition cann't proceed
-
         Raises:
             ValueError: When transition is not part of this step.
         Returns:
-            bool: True when process can proceed, False if it cannot
+            Union[bool, jembewf.CanProceed]: Returns True if process can proceed or
+                CanProceed instanace with concated reasons if process can't proceed.
         """
         if transition and transition not in self.state.transitions:
             raise ValueError(
@@ -201,11 +210,13 @@ class StepMixin:
             )
         transitions = [transition] if transition else self.state.transitions
 
+        cannot_proceed = CanProceed(False)
         for trans in transitions:
             transition_callback = trans.callback(trans, self)
-            if transition_callback.can_proceed():
+            if can_proceed := transition_callback.can_proceed():
                 return True
-        return False
+            cannot_proceed.append_reason(can_proceed)
+        return cannot_proceed
 
     @classmethod
     def get_process_table_name(cls) -> str:

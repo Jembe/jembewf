@@ -5,7 +5,7 @@ from .state import State, StateCallback
 from .transition import Transition, TransitionCallback
 from .process_mixin import ProcessMixin, CantStartProcess
 from .step_mixin import StepMixin
-from .helpers import get_jembewf
+from .helpers import get_jembewf, CanProceed
 
 
 if TYPE_CHECKING:
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 __all__ = (
     "get_jembewf",
+    "CanProceed",
     "JembeWF",
     "Flow",
     "FlowCallback",

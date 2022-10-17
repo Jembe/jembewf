@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Type, Dict, Optional, List
+from typing import TYPE_CHECKING, Type, Dict, Optional, List, Union
 
 if TYPE_CHECKING:
     import jembewf
@@ -17,8 +17,14 @@ class FlowCallback:
 
         self.flow = process.flow
 
-    def can_start(self) -> bool:
-        """Check if a flow can be started. Default returns True"""
+    def can_start(self) -> Union[bool, "jembewf.CanProceed"]:
+        """Check if a flow can be started. Default returns True
+
+        Returns:
+            Union[bool, jembewf.CanProceed]: True if flow can start.
+                You can attach reason  why flow cannt start
+                by returing instance of jembewf.CanProceed. Default returns True.
+        """
         return True
 
     def callback(self):
