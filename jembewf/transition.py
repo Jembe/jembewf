@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING, Optional, Type, Union
+from hashlib import md5
 
 if TYPE_CHECKING:
     import jembewf
@@ -82,7 +83,9 @@ class Transition:
         self.flow = state.flow
         self.to_state = self.flow.states[self.to_state_name]
         transition_id = state.transitions.index(self)
-        self.name = f"{self.from_state.name} -- {transition_id}"
+        self.name = md5(
+            f"{self.flow.name } -- {self.from_state.name} -- {transition_id}".encode()
+        ).hexdigest()
         self._validate()
 
     def _validate(self):
