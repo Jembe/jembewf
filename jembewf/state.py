@@ -76,3 +76,11 @@ class State:
             raise ValueError(
                 f"Transition {transition_name} does not exist in state '{self.name}'!"
             ) from StopIteration
+
+    def has_transition(self, transition_name: str) -> bool:
+        """Check if transition exsist"""
+        try:
+            next(trans for trans in self.transitions if trans.name == transition_name)
+            return True
+        except StopIteration:
+            return False
