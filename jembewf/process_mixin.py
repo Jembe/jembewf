@@ -61,7 +61,7 @@ class ProcessMixin:
         step = get_jembewf().step_model
         return list(
             session.query(step)
-            .filter(step.is_active == True, step.process_id == self.id)
+            .filter(step.is_active == True, step.process == self)
             .all()
         )
 
@@ -115,9 +115,8 @@ class ProcessMixin:
         jwf = get_jembewf()
         process = cls._create_process(flow_name, **process_vars)
         if process.callback.can_start():
-            # save process to db
+            # add process to db
             jwf.db.session.add(process)
-            jwf.db.session.commit()
 
             process.callback.callback()
 
@@ -150,13 +149,11 @@ class ProcessMixin:
         session = object_session(self)
         step = get_jembewf().step_model
         is_running = session.query(
-            session.query(step).filter(step.is_active == True, step.process_id == self.id).exists()
+            session.query(step).filter(step.is_active == True, step.process == self).exists()
         ).scalar()
         if self.is_running != is_running:
             self.is_running = is_running
             self.ended_at = datetime.utcnow()
-            session.add(self)
-            session.commit()
         return is_running
 
     @classmethod

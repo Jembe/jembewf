@@ -2,12 +2,8 @@ import sqlalchemy as sa
 from jembewf import (
     JembeWF,
     Flow,
-    FlowCallback,
     State,
-    StateCallback,
     Transition,
-    TransitionCallback,
-    get_jembewf,
 )
 import jembewf
 
@@ -30,6 +26,7 @@ def test_set_process_model_attributes(app, app_ctx, _db):
 
     class MyData(_db.Model):
         """My data with one to one backlink to process"""
+
         __tablename__ = "mydata"
         id = sa.Column(sa.Integer(), primary_key=True)
         process = sa.orm.relationship(Process, back_populates="my_data", uselist=False)
@@ -55,6 +52,7 @@ def test_set_process_model_attributes(app, app_ctx, _db):
     with app_ctx:
         my_data = MyData()
         process = jwf.start("flow", my_data=my_data, other_data="other")
+        jwf.db.session.commit()
 
         assert process.id is not None
         assert my_data.id is not None

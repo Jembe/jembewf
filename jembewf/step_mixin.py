@@ -117,7 +117,6 @@ class StepMixin:
         step.is_last_step = len(state.transitions) == 0
 
         jwf.db.session.add(step)
-        # jwf.db.session.commit()
 
         if transition_callback:
             transition_callback.callback(step)
@@ -128,11 +127,9 @@ class StepMixin:
             step.is_active = False
             step.ended_at = datetime.utcnow()
             jwf.db.session.add(step)
-            # jwf.db.session.commit()
         elif step.state.auto_proceed:
             step.proceed()
 
-        jwf.db.session.commit()
         return step
 
     def proceed(
@@ -178,7 +175,6 @@ class StepMixin:
             self.ended_at = datetime.utcnow()
             jwf = get_jembewf()
             jwf.db.session.add(self)
-            jwf.db.session.commit()
             self.process.check_is_running()
 
         return proceeded if proceeded else cannot_proceed
