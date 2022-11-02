@@ -133,7 +133,9 @@ class StepMixin:
         return step
 
     def proceed(
-        self, transition: Optional["jembewf.Transition"] = None
+        self,
+        transition: Optional["jembewf.Transition"] = None,
+        **transition_params
     ) -> Union[bool, "jembewf.CanProceed"]:
         """Proceed process with transition from this step
 
@@ -163,7 +165,7 @@ class StepMixin:
         proceeded = False
         cannot_proceed = CanProceed(False)
         for trans in transitions:
-            transition_callback = trans.callback(trans, self)
+            transition_callback = trans.callback(trans, self, **transition_params)
             if can_proceed := transition_callback.can_proceed():
                 self.create(self.process, trans.to_state, self, transition_callback)
                 proceeded = True

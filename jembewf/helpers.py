@@ -44,6 +44,14 @@ class CanProceed:
         if isinstance(can_proceed, CanProceed) and isinstance(can_proceed.reason, str):
             self.reason += can_proceed.reason
 
+    def add_reason(self, reason: str, result: bool = False):
+        """Adds reason to result"""
+        if self.reason is not None:
+            self.reason += "\n" + reason
+        else:
+            self.reason = reason
+        self.result = self.result and result
+
 
 def get_jembewf() -> "jembewf.JembeWF":
     """Returns instance of JembeWf for current Flask application"""

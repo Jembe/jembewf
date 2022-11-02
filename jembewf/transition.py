@@ -14,9 +14,7 @@ class TransitionCallback:
     """
 
     def __init__(
-        self,
-        transition: "jembewf.Transition",
-        from_step: "jembewf.StepMixin",
+        self, transition: "jembewf.Transition", from_step: "jembewf.StepMixin", **params
     ):
         self.from_step = from_step
         self.process = from_step.process
@@ -25,6 +23,8 @@ class TransitionCallback:
         self.from_state = transition.from_state
         self.to_state = transition.to_state
         self.flow = transition.flow
+
+        self.params = params
 
         if transition.flow != self.process.flow:
             raise Exception(

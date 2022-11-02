@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy_json import NestedMutableJson
 from sqlalchemy.orm import declarative_mixin, declared_attr, object_session
 import sqlalchemy as sa
-from .helpers import get_jembewf
+from .helpers import get_jembewf, CanProceed
 
 
 if TYPE_CHECKING:
@@ -141,7 +141,7 @@ class ProcessMixin:
         proceded = False
         for step in self.current_steps():
             if not step.is_last_step:
-                proceded = proceded or step.proceed()
+                proceded = proceded or bool(step.proceed())
         return proceded
 
     def check_is_running(self):
