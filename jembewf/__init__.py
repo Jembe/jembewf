@@ -146,7 +146,7 @@ class JembeWF:
         try:
             return self.flows[flow_name]
         except KeyError as err:
-            raise ValueError(f"Flow '{flow_name}' doen't exit!") from err
+            raise ValueError(f"Flow '{flow_name}' doesn't exit!") from err
 
     def has_flow(self, flow_name: str) -> bool:
         """Returns true if flow with provided name exist"""
