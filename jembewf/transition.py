@@ -17,7 +17,7 @@ class TransitionCallback:
         self, transition: "jembewf.Transition", from_step: "jembewf.StepMixin", **params
     ):
         self.from_step = from_step
-        self.process = from_step.process
+        self.process:"jembewf.ProcessMixin" = from_step.process
 
         self.transition = transition
         self.from_state = transition.from_state
